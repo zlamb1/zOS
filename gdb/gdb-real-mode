@@ -1,0 +1,14 @@
+set confirm off
+set verbose off
+
+target remote localhost:1234
+
+add-symbol-file build/stage1.o -s .stage1 0x7C00
+add-symbol-file build/stage2.o -s .stage2 0x8000
+
+set architecture i8086
+
+layout reg
+
+break *0x7c00
+continue
