@@ -1,11 +1,13 @@
-OUTPUT_DIR = build
+OUTPUT_DIR := build
 
-all: clean setup bootloader_assemble bootloader_link disk
+.PHONY: all dir bootloader_assemble bootloader_link clean
 
-setup:
+all: clean dir bootloader_assemble bootloader_link disk
+
+dir:
 	mkdir -p ${OUTPUT_DIR}
 
-bootloader_assemble: setup
+bootloader_assemble: dir
 	as defines.s -o ${OUTPUT_DIR}/defines.o -g
 	as stage1.s -o ${OUTPUT_DIR}/stage1.o -g
 	as stage2.s -o ${OUTPUT_DIR}/stage2.o -g
