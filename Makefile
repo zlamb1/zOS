@@ -1,6 +1,6 @@
 OUTPUT_DIR = build
 
-PHONY: clean setup bootloader_assemble bootloader_link disk
+all: clean setup bootloader_assemble bootloader_link disk
 
 setup:
 	mkdir -p ${OUTPUT_DIR}
