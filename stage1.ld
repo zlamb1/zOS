@@ -5,6 +5,8 @@ SECTIONS
     .text :
     {
         *(.stage1)
+        *(.stage1.data)
+        *(.stage1.rodata)
         FILL(0x0)
         . = 510;
         SHORT(0xAA55)

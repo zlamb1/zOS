@@ -6,7 +6,7 @@ SECTIONS
     {
         *(.stage2)
         FILL(0x0)
-        . = 1536;
+        . = 512;
     }
 
     /DISCARD/ : { *(*) }
