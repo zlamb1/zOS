@@ -152,7 +152,7 @@ read_attempts: .byte 0x0
 .section .stage1.rodata, "a", @progbits
 
 read_fail_error: .asciz "Failed to read from disk."
-read_len_error: .asciz "Failed to read the required sectors from disk."
+read_len_error: .asciz "Failed to read required sectors from disk."
 
 .equ STAGE1_SEGMENT, STAGE1_MEM_LOC / 0x10
 .equ BOOT_OFFSET, STAGE1_MEM_LOC + _boot - _start
