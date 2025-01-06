@@ -64,8 +64,8 @@ chs_load:
     jc read_fail
 
     pop %dx
-    cmp %dh, %al  # num sectors read is restored to dh
-    jne _loop     # we didn't read the num sectors requested; something failed
+    cmp %dh, %al       # num sectors read is restored to dh
+    jne read_fail_len  # we didn't read the num sectors requested; something failed
 
     popa
     ret
