@@ -1,26 +1,29 @@
 .code16
-.org 0
 
-.include "defines.s"
+.extern _STAGE1_MEM_LOC
+.extern _STAGE1_STACK_MEM_LOC
+.extern _STAGE2_MEM_LOC
+.extern _STAGE2_NUM_SECTORS
 
 .section .stage1, "ax"
 
 .global _start
 
 _start:
-    # set up data segment
-    mov $STAGE1_SEGMENT, %ax
+    # zero data and stack segment
+    xor %ax, %ax
     mov %ax, %ds
+    mov %ax, %ss
 
     # set up stack
-    mov $STACK_MEM_LOC, %bp
+    mov $_STAGE1_STACK_MEM_LOC, %bp
     mov %bp, %sp
 
     # store drive num
     mov %dl, (drive_number)
 
     # set up code segment
-    ljmp $0, $BOOT_OFFSET
+    ljmp $0, $_boot
 
 _boot:
     # store amount of low memory (KB) into %ax 
@@ -34,14 +37,14 @@ _boot:
     # load argument registers
     mov $0x0, %ax
     mov %ax, %es
-    mov $STAGE2_MEM_LOC, %bx # %es:%bx -> 0:STAGE2_MEM_LOC
-    mov $STAGE2_NUM_SECTORS, %dh
+    mov $_STAGE2_MEM_LOC, %bx # %es:%bx -> 0:_STAGE2_MEM_LOC
+    mov $_STAGE2_NUM_SECTORS, %dh
 
     # load stage 2 into memory
     call chs_load
 
     # jump to stage 2
-    ljmp $0x0, $STAGE2_MEM_LOC
+    ljmp $0x0, $_STAGE2_MEM_LOC
 
 /*
     %dh - num of sectors (512B) to read
@@ -153,6 +156,3 @@ read_attempts: .byte 0x0
 
 read_fail_error: .asciz "Failed to read from disk."
 read_len_error: .asciz "Failed to read required sectors from disk."
-
-.equ STAGE1_SEGMENT, STAGE1_MEM_LOC / 0x10
-.equ BOOT_OFFSET, STAGE1_MEM_LOC + _boot - _start
