@@ -10,6 +10,9 @@
 .global _start
 
 _start:
+    # disable interrupts temporarily so that they don't use broken stack
+    cli 
+
     # zero data and stack segment
     xor %ax, %ax
     mov %ax, %ds
@@ -21,6 +24,9 @@ _start:
 
     # store drive num
     mov %dl, (drive_number)
+
+    # enable interrupts
+    sti
 
     # set up code segment
     ljmp $0, $_boot
