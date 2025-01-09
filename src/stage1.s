@@ -32,13 +32,18 @@ _start:
     ljmp $0, $_boot
 
 _boot:
-    # store amount of low memory (KB) into %ax 
-    clc
-    int $0x12
+    lea greeting, %bx
+    call print_str
 
-    # FIXME: handle this
-    # the interrupt failed
-    jc _loop
+    # print drive num
+    lea drive_num_str, %bx
+    call print_str
+    mov (drive_number), %al
+    call print_num
+    mov $'\r', %al
+    call print_char
+    mov $'\n', %al
+    call print_char
 
     # load argument registers
     mov $0x0, %ax
@@ -86,6 +91,13 @@ read_fail:
 
     # save %ax
     push %ax
+    
+    # reset drive
+    mov (drive_number), %dl
+    mov $0, %ah
+    int $0x13
+    
+    jc read_fail_reset
 
     # increment read_attempts
     mov (read_attempts), %al
@@ -112,12 +124,10 @@ read_fail:
     push %ax
 
     mov $' ', %al
-    mov $0x0E, %ah
-    int $0x10
+    call print_char
 
     mov $'(', %al
-    mov $0x0E, %ah
-    int $0x10
+    call print_char
 
     pop %ax
 
@@ -126,8 +136,7 @@ read_fail:
     call print_num
 
     mov $')', %al
-    mov $0x0E, %ah
-    int $0x10
+    call print_char
 
     call wait_for_key_press
     jmp reboot
@@ -137,6 +146,22 @@ read_fail_len:
     call print_str
     call wait_for_key_press
     jmp reboot
+
+read_fail_reset:
+    lea read_reset_error, %bx
+    call print_str
+    call wait_for_key_press
+    jmp reboot
+
+/*
+    %al - char to print
+*/
+print_char:
+    pusha
+    mov $0x0E, %ah
+    int $0x10
+    popa
+    ret
 
 /*
     %bx - stores address to string
@@ -211,5 +236,8 @@ read_attempts: .byte 0x0
 
 .section .stage1.rodata, "a", @progbits
 
+greeting: .asciz "Starting Stage 1...\r\n"
+drive_num_str: .asciz "Drive Number: "
 read_fail_error: .asciz "Disk Read Fail"
 read_len_error: .asciz "Disk Read Length Fail"
+read_reset_error: .asciz "Disk Reset Fail"

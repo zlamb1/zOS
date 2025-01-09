@@ -4,7 +4,7 @@ SECTIONS
 {
     _STAGE1_MEM_LOC = 0x7C00;
     _STAGE1_STACK_MEM_LOC = 0x9000;
-    _STAGE2_MEM_LOC = 0x8000;
+    _STAGE2_MEM_LOC = 0x1000;
     _STAGE2_STACK_MEM_LOC = 0x90000;
 
     . = _STAGE1_MEM_LOC;
@@ -53,7 +53,7 @@ SECTIONS
     }
 
     /* size of stage2 divided by 512 */
-    _STAGE2_NUM_SECTORS = (_end - _STAGE2_MEM_LOC) / 0x200;
+    _STAGE2_NUM_SECTORS = (_end - _STAGE2_MEM_LOC) / 0x200; 
 
     /DISCARD/ : { *(*) }
 }

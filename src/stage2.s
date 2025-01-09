@@ -108,7 +108,7 @@ gdt_desc:
 
 .section .stage2.rodata, "a", @progbits
 
-greeting: .asciz "Welcome to Stage 2!\r\n"
+greeting: .asciz "Starting Stage 2...\r\n"
 a20_error: .asciz "The A20 line could not be enabled!\r\n"
 
 .section .stage2, "ax"
