@@ -1,5 +1,7 @@
 SRC_DIR         := src
+INCLUDE_DIR     := include
 OUTPUT_DIR      := build
+OBJ_OUTPUT_DIR  := ${OUTPUT_DIR}/obj
 TOOL_DIR        := ${HOME}/opt/cross
 BINUTILS_DIR    := ${TOOL_DIR}/bin
 TARGET          := x86_64-elf
@@ -10,42 +12,47 @@ CC32            := ${BINUTILS_DIR}/${TARGET32}-gcc
 
 ASFLAGS         := -g
 LDFLAGS         := -nostdlib
-BOOT_CFLAGS     := -nostdlib -ffreestanding -lgcc -T boot.ld
+BOOT_CFLAGS     := -nostdlib -ffreestanding -lgcc -T boot.ld -Wl,--no-warn-rwx-segments -g
 WARNINGS        := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
                    -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations \
                    -Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
                    -Wconversion -Wstrict-prototypes
-CFLAGS          := ${WARNINGS} -g -ffreestanding -mno-red-zone -c
+CFLAGS          := ${WARNINGS} -I${INCLUDE_DIR} -g -ffreestanding -mno-red-zone
 
-STAGE1_OBJ_LIST := ${OUTPUT_DIR}/stage1.o
-CRTI_OBJ        := ${OUTPUT_DIR}/crti.o
+STAGE1_OBJ_LIST := ${OBJ_OUTPUT_DIR}/stage1.o
+
+CRTI_OBJ        := ${OBJ_OUTPUT_DIR}/crti.o
 CRTBEGIN_OBJ    := $(shell ${CC32} ${CFLAGS} -print-file-name=crtbegin.o)
 CRTEND_OBJ      := $(shell ${CC32} ${CFLAGS} -print-file-name=crtend.o)
-CRTN_OBJ        := ${OUTPUT_DIR}/crtn.o
-STAGE2_OBJ_LIST := ${OUTPUT_DIR}/stage2.o ${CRTI_OBJ} ${CRTBEGIN_OBJ} ${OUTPUT_DIR}/stage2_c.o ${CRTEND_OBJ} ${CRTN_OBJ}
+CRTN_OBJ        := ${OBJ_OUTPUT_DIR}/crtn.o
 
 PROJDIRS        := ${SRC_DIR}
-SRCFILES        := $(wildcard $(PROJDIRS)/*.c)
+SRCFILES        := ${wildcard ${SRC_DIR}/*.c}
+HDRFILES        := ${wildcard ${INCLUDE_DIR}/*.h}
+OBJFILES        := ${patsubst %.c,${OBJ_OUTPUT_DIR}/%.o, ${notdir ${SRCFILES}}}
 
-.PHONY: all dir assemble crt_assemble compile link clean
+STAGE2_OBJ_LIST := ${OBJ_OUTPUT_DIR}/stage2.o ${CRTI_OBJ} ${CRTBEGIN_OBJ} ${OBJFILES} ${CRTEND_OBJ} ${CRTN_OBJ}
 
-all: clean dir assemble crt_assemble compile link disk
+.PHONY: all assemble link clean
 
-dir:
+all: assemble link disk
+
+${OUTPUT_DIR}:
 	mkdir -p ${OUTPUT_DIR}
 
-assemble: dir
-	${AS32} ${SRC_DIR}/stage1.s -o ${OUTPUT_DIR}/stage1.o ${ASFLAGS}
-	${AS32} ${SRC_DIR}/stage2.s -o ${OUTPUT_DIR}/stage2.o ${ASFLAGS}
+${OBJ_OUTPUT_DIR}:
+	mkdir -p ${OBJ_OUTPUT_DIR}
 
-crt_assemble:
+assemble: ${OBJ_OUTPUT_DIR}
+	${AS32} ${SRC_DIR}/stage1.s -o ${OBJ_OUTPUT_DIR}/stage1.o ${ASFLAGS}
+	${AS32} ${SRC_DIR}/stage2.s -o ${OBJ_OUTPUT_DIR}/stage2.o ${ASFLAGS}
 	${AS32} ${SRC_DIR}/crti.s -o ${CRTI_OBJ} ${ASFLAGS}
 	${AS32} ${SRC_DIR}/crtn.s -o ${CRTN_OBJ} ${ASFLAGS}
 
-compile:
-	${CC32} ${SRCFILES} ${CFLAGS} -o ${OUTPUT_DIR}/stage2_c.o
+${OBJ_OUTPUT_DIR}/%.o: ${SRC_DIR}/%.c | ${OBJ_OUTPUT_DIR}
+	${CC32} ${CFLAGS} -c $< -o $@
 
-link: assemble crt_assemble compile
+link: assemble ${SRCFILES} ${OBJFILES}
 	${CC32} ${STAGE1_OBJ_LIST} ${STAGE2_OBJ_LIST} -o ${OUTPUT_DIR}/boot.elf ${BOOT_CFLAGS}
 	objcopy -O binary ${OUTPUT_DIR}/boot.elf ${OUTPUT_DIR}/boot.bin
 

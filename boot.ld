@@ -9,19 +9,23 @@ SECTIONS
 
     . = _STAGE1_MEM_LOC;
 
+    /* Linker generates warning: <file> has a LOAD segment with RWX permissions */
+    /* This can be safely ignored and is caused by text and data sections not being page-aligned. */
     .stage1.text :
     {
-        *(.stage1)
+        *(.stage1)   
         *(.stage1.data)
         *(.stage1.rodata)
+        
         FILL(0x0)
         . = 510;
-        SHORT(0xAA55)
+        SHORT(0xAA55) 
     }
-    
+
     .stage2.text _STAGE2_MEM_LOC : AT(_STAGE1_MEM_LOC + 0x200)
     {
         *(.stage2)
+        . = ALIGN(32);
         *(.stage2.data)
         *(.stage2.rodata)
 
@@ -49,7 +53,7 @@ SECTIONS
     }
 
     /* size of stage2 divided by 512 */
-    _STAGE2_NUM_SECTORS = (_end - _STAGE2_MEM_LOC) / 0x200;
+    _STAGE2_NUM_SECTORS = 16;
 
     /DISCARD/ : { *(*) }
 }

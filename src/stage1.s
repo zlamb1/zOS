@@ -97,6 +97,32 @@ read_fail:
     # print error and halt
     lea read_fail_error, %bx
     call print_str
+
+    # check status of last operation
+    mov (drive_number), %dl
+    mov $0x1, %ah
+    int $0x13
+
+    push %ax
+
+    mov $' ', %al
+    mov $0x0E, %ah
+    int $0x10
+
+    mov $'(', %al
+    mov $0x0E, %ah
+    int $0x10
+
+    pop %ax
+
+    # print status
+    mov %ah, %al
+    call print_num
+
+    mov $')', %al
+    mov $0x0E, %ah
+    int $0x10
+
     call wait_for_key_press
     jmp reboot
 
@@ -131,6 +157,31 @@ print_str:
     ret
 
 /*
+    %al - number to print
+*/
+print_num:
+    pusha
+
+    # FIXME: doesn't print zero correctly
+    test %al, %al
+    jz 1f
+
+    mov $10, %bl
+    mov $0, %ah
+    div %bl
+    call print_num
+
+    # store character remainder into %al
+    mov $'0', %al
+    add %ah, %al
+    mov $0x0E, %ah
+    int $0x10
+
+    1:
+    popa
+    ret
+
+/*
     returns %al - key pressed
 */
 wait_for_key_press:
@@ -154,5 +205,5 @@ read_attempts: .byte 0x0
 
 .section .stage1.rodata, "a", @progbits
 
-read_fail_error: .asciz "Failed to read from disk."
-read_len_error: .asciz "Failed to read required sectors from disk."
+read_fail_error: .asciz "Disk Read Fail"
+read_len_error: .asciz "Disk Read Length Fail"
