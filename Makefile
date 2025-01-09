@@ -33,7 +33,7 @@ OBJFILES        := ${patsubst %.c,${OBJ_OUTPUT_DIR}/%.o, ${notdir ${SRCFILES}}}
 
 STAGE2_OBJ_LIST := ${OBJ_OUTPUT_DIR}/stage2.o ${CRTI_OBJ} ${CRTBEGIN_OBJ} ${OBJFILES} ${CRTEND_OBJ} ${CRTN_OBJ}
 
-.PHONY: all assemble link clean
+.PHONY: all assemble link usb clean
 
 all: assemble link disk
 
@@ -58,6 +58,10 @@ link: assemble ${SRCFILES} ${OBJFILES}
 
 disk: link
 	dd if=${OUTPUT_DIR}/boot.bin of=${OUTPUT_DIR}/boot.disk
+
+usb: disk
+	sudo dd if=${OUTPUT_DIR}/boot.disk of=/dev/sdb bs=4M status=progress conv=fsync
+	sudo dd if=/dev/sdb of=${OUTPUT_DIR}/verify.disk bs=4M count=1
 
 clean:
 	rm -rf build
