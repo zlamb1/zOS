@@ -53,7 +53,7 @@ SECTIONS
     }
 
     /* size of stage2 divided by 512 */
-    _STAGE2_NUM_SECTORS = 16;
+    _STAGE2_NUM_SECTORS = (_end - _STAGE2_MEM_LOC) / 0x200;
 
     /DISCARD/ : { *(*) }
 }
