@@ -10,7 +10,7 @@
 .global _start
 
 _start:
-    # disable interrupts temporarily so that they don't use broken stack
+    # disable interrupts temporarily so that they don't use incorrect segments
     cli 
 
     # zero data and stack segment
