@@ -130,10 +130,9 @@ pmode:
 
     # System V ABI expects direction flag cleared
     cld
-
-    # loader_main arg #1
-    push $12
     
     call loader_main
+
+
 
 .extern loader_main

@@ -81,10 +81,25 @@ void tui_move_cursor(uint16_t x, uint16_t y)
 void tui_write_char(char c)
 {
     uint16_t pos = (uint16_t) ((tui_y * VGA_WIDTH + tui_x) * 2);
-    vmem[pos] = c; 
-    vmem[pos + 1] = active_color;
-    advance_tui_x(1);
-    tui_move_cursor(tui_x, tui_y);
+
+    switch (c)
+    {
+        case '\r':
+            advance_tui_x(1);
+            tui_x = 0;
+            tui_move_cursor(tui_x, tui_y);
+            break;
+        case '\n':
+            advance_tui_y(1);
+            tui_move_cursor(tui_x, tui_y);
+            break;
+        default:
+            vmem[pos] = c; 
+            vmem[pos + 1] = active_color;
+            advance_tui_x(1);
+            tui_move_cursor(tui_x, tui_y);
+            break;
+    }
 }
 
 void tui_write_str(const char *str)
@@ -135,6 +150,19 @@ static inline void _write_uint32(uint32_t n)
     tui_write_char('0' + (char) remainder);
 }
 
+void tui_write_int32(int32_t n)
+{
+    int neg = n < 0; 
+
+    if (neg)
+    {
+        tui_write_char('-');
+        n = -n;
+    }
+
+    tui_write_uint32((uint32_t) n);
+}
+
 void tui_write_uint32(uint32_t n)
 {
     if (n == 0)
@@ -144,6 +172,43 @@ void tui_write_uint32(uint32_t n)
     }
 
     _write_uint32(n);
+}
+
+void tui_printf(const char *fmt, ...)
+{
+    va_list args; 
+    va_start(args, fmt); 
+
+    while (*fmt != '\0')
+    {
+        char c = *fmt++;
+        if (c == '%')
+        {
+            switch (*fmt++)
+            {
+                case '%':
+                    tui_write_char('%');
+                    break;
+                case 'c':
+                    tui_write_char((char) va_arg(args, int));
+                    break;
+                case 'i':
+                case 'd':
+                    tui_write_int32(va_arg(args, int32_t)); 
+                    break;
+                case 's':
+                    tui_write_str(va_arg(args, const char*));
+                    break;
+                case 'u':
+                    tui_write_uint32(va_arg(args, uint32_t)); 
+                    break;
+                default:
+                    break;
+            }
+        } else tui_write_char(c);
+    }
+
+    va_end(args);
 }
 
 void tui_clear(char color)

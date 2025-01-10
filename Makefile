@@ -12,12 +12,12 @@ CC32            := ${BINUTILS_DIR}/${TARGET32}-gcc
 
 ASFLAGS         := -g
 LDFLAGS         := -nostdlib
-BOOT_CFLAGS     := -nostdlib -ffreestanding -lgcc -T boot.ld -Wl,--no-warn-rwx-segments -g
+BOOT_CFLAGS     := -nostdlib -ffreestanding -fno-strict-aliasing -lgcc -T boot.ld -Wl,--no-warn-rwx-segments -g
 WARNINGS        := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
                    -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations \
                    -Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
                    -Wconversion -Wstrict-prototypes
-CFLAGS          := ${WARNINGS} -I${INCLUDE_DIR} -g -ffreestanding -mno-red-zone
+CFLAGS          := ${WARNINGS} -I${INCLUDE_DIR} -g -ffreestanding -fno-strict-aliasing -mno-red-zone
 
 STAGE1_OBJ_LIST := ${OBJ_OUTPUT_DIR}/stage1.o
 
