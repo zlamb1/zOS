@@ -128,6 +128,12 @@ pmode:
     movb $'P', (0xB8000)
     movb $0x1B, (0xB8001)
 
-    jmp loader_main
+    # System V ABI expects direction flag cleared
+    cld
+
+    # loader_main arg #1
+    push $12
+    
+    call loader_main
 
 .extern loader_main
