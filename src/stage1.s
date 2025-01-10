@@ -188,6 +188,7 @@ print_str:
     ret
 
 /*
+    !WARNING: this function won't handle zero
     %al - number to print
 */
 print_num:

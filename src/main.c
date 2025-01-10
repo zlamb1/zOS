@@ -6,8 +6,9 @@ void loader_main(void);
 
 void loader_main(void)
 {
-    init_tui(0x1F);
-    write_str("Starting zBOOT...");
+    tui_init(0x1F);
+    tui_write_str("Starting zBOOT...\r\n");
+    tui_write_uint32(4294967295);
 
     for (;;);
 }
