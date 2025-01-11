@@ -1,6 +1,7 @@
 .code16
 
 .extern _STAGE2_STACK_MEM_LOC
+.extern _STAGE2_MEM_DETAIL_LOC
 
 .section .stage2, "ax"
 
@@ -23,6 +24,10 @@ _entry:
     jmp abort
 
     a20_enabled:
+
+    # store a map of memory
+    call find_mem
+    mov (_STAGE2_MEM_DETAIL_LOC), %ax
 
     # disable interrupts
     cli
@@ -60,6 +65,82 @@ print_str:
     jmp write
 
     end:
+    popa
+    ret
+
+find_mem:
+    pusha
+
+    # clear carry flag
+    clc
+
+    # setup destination (%es:%di)
+    mov $_STAGE2_MEM_DETAIL_LOC, %di
+
+    # add 8 bytes to preserve alignment of first entry
+    add $8, %di
+
+    # zero %ebx and %es
+    xor %ebx, %ebx
+    mov %bx, %es
+
+    # use 4 bytes for number of entries
+    mov %ebx, %es:_STAGE2_MEM_DETAIL_LOC
+
+    # store constants
+    mov $0x0534D4150, %edx
+    mov $0xE820, %eax
+    # force a valid ACPI 3.X entry
+    mov $1, %ecx
+    mov %ecx, %es:20(%di)
+    # request 24 bytes
+    mov $24, %ecx
+    int $0x15
+    jc 1f
+    mov $0x0534D4150, %edx
+    cmp %edx, %eax
+    jne 1f
+    test %ebx, %ebx
+    jz 1f
+    jmp check_entry
+
+    # similar to above code
+    read_entry:
+    mov $0xE820, %eax
+    mov $1, %ecx
+    mov %ecx, %es:20(%di)
+    mov $24, %ecx
+    int $0x15
+    jc 1f
+    mov $0x0534D4150, %edx
+
+    check_entry:
+    # if zero bytes were read skip entry
+    jcxz skip_entry
+    cmp $20, %cl
+    jbe notext
+    mov %es:20(%di), %eax
+    test $1, %eax
+    je skip_entry
+
+    notext:
+    mov %es:8(%di), %ecx
+    or %es:12(%di), %ecx
+    jz skip_entry
+
+    # inc num_entries
+    mov %es:_STAGE2_MEM_DETAIL_LOC, %eax
+    inc %eax
+    mov %eax, %es:_STAGE2_MEM_DETAIL_LOC
+    # increment %di by 24 bytes
+    add $24, %di
+
+    skip_entry:
+    test %ebx, %ebx
+    jnz read_entry
+
+    1:
+    clc
     popa
     ret
 
@@ -131,8 +212,8 @@ pmode:
     # System V ABI expects direction flag cleared
     cld
     
+    mov (0x5000), %ax
+
     call loader_main
-
-
 
 .extern loader_main

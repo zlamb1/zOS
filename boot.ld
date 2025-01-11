@@ -2,10 +2,11 @@ ENTRY(_entry)
 
 SECTIONS
 {
-    _STAGE1_MEM_LOC = 0x7C00;
-    _STAGE1_STACK_MEM_LOC = 0x9000;
-    _STAGE2_MEM_LOC = 0x0600;
-    _STAGE2_STACK_MEM_LOC = 0x90000;
+    _STAGE1_MEM_LOC        = 0x7C00;
+    _STAGE1_STACK_MEM_LOC  = 0x9000;
+    _STAGE2_MEM_LOC        = 0x0600;
+    _STAGE2_STACK_MEM_LOC  = 0x90000;
+    _STAGE2_MEM_DETAIL_LOC = 0x5000;
 
     . = _STAGE1_MEM_LOC;
 
@@ -31,7 +32,7 @@ SECTIONS
 
         /* pad such that C code is at static offset from stage 2  */
         FILL(0x0)
-        . = 512;
+        . = 1024;
 
         /* used by C compiler */
         *(.text)
@@ -54,8 +55,6 @@ SECTIONS
 
     /* size of stage2 divided by 512 */
     _STAGE2_NUM_SECTORS = (_end - _STAGE2_MEM_LOC) / 0x200; 
-
-    /DISCARD/ : { *(*) }
 }
 
 OUTPUT_FORMAT(elf32-i386)
