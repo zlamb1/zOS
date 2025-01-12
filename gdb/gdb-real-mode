@@ -9,3 +9,35 @@ layout reg
 
 break *0x7C00
 cont
+
+b isr_stub_1
+b isr_stub_2
+b isr_stub_3
+b isr_stub_4
+b isr_stub_5
+b isr_stub_6
+b isr_stub_7
+b isr_stub_8
+b isr_stub_9
+b isr_stub_10
+b isr_stub_11
+b isr_stub_12
+b isr_stub_13
+b isr_stub_14
+b isr_stub_15
+b isr_stub_16
+b isr_stub_17
+b isr_stub_18
+b isr_stub_19
+b isr_stub_20
+b isr_stub_21
+b isr_stub_22
+b isr_stub_23
+b isr_stub_24
+b isr_stub_25
+b isr_stub_26
+b isr_stub_27
+b isr_stub_28
+b isr_stub_29
+b isr_stub_30
+b isr_stub_31

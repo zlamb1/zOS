@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#include "idt.h"
+#include "pic.h"
 #include "tui.h"
 
 extern uint32_t _STAGE2_MEM_DETAIL_LOC; 
@@ -25,12 +27,13 @@ void loader_main(void);
 __attribute__((noreturn))
 void loader_main()
 {
+    pic_init();
+    idt_init();
+
     tui_init(0x1F);
-    tui_printf("%s\r\n", "Starting zBOOT...");
+    tui_printf("%s\r\n\n", "Starting zBOOT...");
 
     MemRegions *regions = (MemRegions*) &_STAGE2_MEM_DETAIL_LOC;
-
-    tui_printf("Num Entries: %lu\r\n\n", regions->num_entries);
 
     MemRegion *region = regions->entries;
     uint64_t mem = 0;
@@ -39,7 +42,7 @@ void loader_main()
     {
         if (region->type == 1)
             mem += region->length;
-        tui_printf("Start=%-16llx Length=%-16llx Type=%lu\r\n", region->base, region->length, region->type);
+        tui_printf("Start=%-16llx Length=%-16llx Type=%lu\n", region->base, region->length, region->type);
         len--;
         if (len > 0) region++;
     }
@@ -47,7 +50,7 @@ void loader_main()
     uint64_t kb = mem / 1000;
     uint64_t mb = kb / 1000; 
     uint64_t gb = mb / 1000;
-    tui_printf("Memory: %llxB | %lluKB | %lluMB | %lluGB\r\n", mem, kb, mb, gb);
+    tui_printf("\nMemory: %llxB | %lluKB | %lluMB | %lluGB\n", mem, kb, mb, gb);
 
     for (;;);
 }

@@ -216,4 +216,6 @@ pmode:
 
     call loader_main
 
+.include "src/isr.s"
+
 .extern loader_main

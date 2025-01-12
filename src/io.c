@@ -23,3 +23,8 @@ void outb(uint16_t port, uint8_t val)
         "memory" 
     );
 }
+
+void io_wait(void)
+{
+    outb(0x80, 0);
+}

@@ -52,6 +52,9 @@ assemble: ${OBJ_OUTPUT_DIR}
 ${OBJ_OUTPUT_DIR}/%.o: ${SRC_DIR}/%.c | ${OBJ_OUTPUT_DIR}
 	${CC32} ${CFLAGS} -c $< -o $@
 
+${OBJ_OUTPUT_DIR}/isr.o: ${SRC_DIR}/isr.c | ${OBJ_OUTPUT_DIR}
+	${CC32} ${CFLAGS} -mgeneral-regs-only -c $< -o $@
+
 link: assemble boot.ld ${SRCFILES} ${OBJFILES}
 	${CC32} ${STAGE1_OBJ_LIST} ${STAGE2_OBJ_LIST} -o ${OUTPUT_DIR}/boot.elf ${BOOT_CFLAGS}
 	objcopy -O binary ${OUTPUT_DIR}/boot.elf ${OUTPUT_DIR}/boot.bin

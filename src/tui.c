@@ -98,12 +98,13 @@ void tui_write_char(char c)
     switch (c)
     {
         case '\r':
-            advance_tui_x(1);
             tui_x = 0;
             tui_move_cursor(tui_x, tui_y);
             break;
         case '\n':
+            // line feed + carriage return
             advance_tui_y(1);
+            tui_x = 0; 
             tui_move_cursor(tui_x, tui_y);
             break;
         default:
@@ -125,13 +126,13 @@ uint32_t tui_write_str(const char *str)
         switch (c) 
         {
             case '\r':
-                advance_tui_x(1);
                 tui_x = 0;
                 tui_move_cursor(tui_x, tui_y);
                 pos = (uint16_t) ((tui_y * VGA_WIDTH + tui_x) * 2);
                 break;
             case '\n':
                 advance_tui_y(1);
+                tui_x = 0; 
                 tui_move_cursor(tui_x, tui_y);
                 pos = (uint16_t) ((tui_y * VGA_WIDTH + tui_x) * 2);
                 break;
