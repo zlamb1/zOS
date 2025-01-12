@@ -33,14 +33,15 @@ void kb_handler(struct interrupt_frame *frame)
         "inb $0x60, %0" :
         "=r" (scancode)
     );
-    
+
     if (!(scancode & 0x80))
     {
         uint8_t key = ascii[scancode];
         uint8_t *vmem = (uint8_t*) 0xB8000; 
         *vmem = key; 
     }
-        // acknowledge PIC
+    
+    // acknowledge PIC
     __asm__ volatile(
         "movb $0x20, %%al\n"
         "outb %%al, $0x20" : : :
