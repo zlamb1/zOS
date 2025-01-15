@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "idt.h"
+#include "kb.h"
 #include "pic.h"
 #include "tui.h"
 
@@ -52,5 +53,16 @@ void loader_main()
     uint64_t gb = mb / 1000;
     tui_printf("\nMemory: %llxB | %lluKB | %lluMB | %lluGB\n", mem, kb, mb, gb);
 
-    for (;;);
+    w:
+    while (!has_key_info());
+    
+    KeyInfo info = dequeue_key_info();
+    char c = get_ascii_from_key_info(info);
+    if (info.pressed && c != '\0')
+    {
+        tui_write_char(get_ascii_from_key_info(info));
+    }
+        
+
+    goto w;
 }

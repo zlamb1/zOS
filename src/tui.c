@@ -91,10 +91,8 @@ void tui_move_cursor(uint16_t x, uint16_t y)
 	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
-void tui_write_char(char c)
+static inline void _write_char_at_pos(char c, uint16_t pos)
 {
-    uint16_t pos = (uint16_t) ((tui_y * VGA_WIDTH + tui_x) * 2);
-
     switch (c)
     {
         case '\r':
@@ -107,6 +105,16 @@ void tui_write_char(char c)
             tui_x = 0; 
             tui_move_cursor(tui_x, tui_y);
             break;
+        case '\b':
+            if (tui_x > 0)
+            {
+                tui_x--;
+                pos -= 2; 
+                vmem[pos] = '\0'; 
+                vmem[pos + 1] = active_color;
+                tui_move_cursor(tui_x, tui_y);
+            }
+            break;
         default:
             vmem[pos] = c; 
             vmem[pos + 1] = active_color;
@@ -114,6 +122,11 @@ void tui_write_char(char c)
             tui_move_cursor(tui_x, tui_y);
             break;
     }
+} 
+
+void tui_write_char(char c)
+{
+    _write_char_at_pos(c, (uint16_t) ((tui_y * VGA_WIDTH + tui_x) * 2));
 }
 
 uint32_t tui_write_str(const char *str)
@@ -135,6 +148,15 @@ uint32_t tui_write_str(const char *str)
                 tui_x = 0; 
                 tui_move_cursor(tui_x, tui_y);
                 pos = (uint16_t) ((tui_y * VGA_WIDTH + tui_x) * 2);
+                break;
+            case '\b':
+                if (tui_x > 0)
+                {
+                    tui_x--;
+                    pos -= 2; 
+                    vmem[pos] = '\0'; 
+                    vmem[pos + 1] = active_color;
+                }
                 break;
             default:
                 len++;

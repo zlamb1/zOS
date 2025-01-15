@@ -27,7 +27,6 @@ typedef struct {
 static IDTR idtr;
 static bool vectors[IDT_MAX_DESCRIPTORS];
 
-void kb_int_init(void);
 void idt_set_descriptor(uint8_t vector, void *isr, uint8_t flags);
 void idt_init(void);
 

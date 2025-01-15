@@ -24,7 +24,7 @@ void outb(uint16_t port, uint8_t val)
     );
 }
 
-void io_wait(void)
+void io_wait()
 {
     outb(0x80, 0);
 }

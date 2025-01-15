@@ -1,14 +1,5 @@
 #include "idt.h"
-
-#include "io.h"
 #include "isr.h"
-
-void kb_int_init()
-{   
-    // enable hardware interrupts for the keyboard only
-    outb(0x21,0xfd);
-    outb(0xa1,0xff);
-}
 
 void idt_set_descriptor(uint8_t vector, void *isr, uint8_t flags) 
 {
