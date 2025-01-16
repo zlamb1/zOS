@@ -1,5 +1,4 @@
 SRC_DIR         := src
-INCLUDE_DIR     := include
 OUTPUT_DIR      := build
 OBJ_OUTPUT_DIR  := ${OUTPUT_DIR}/obj
 TOOL_DIR        := ${HOME}/opt/cross
@@ -10,6 +9,8 @@ AS32            := ${BINUTILS_DIR}/${TARGET32}-as
 LD32            := ${BINUTILS_DIR}/${TARGET32}-ld
 CC32            := ${BINUTILS_DIR}/${TARGET32}-gcc
 
+INCLUDEDIRS     := include ${shell find drivers -type d -name include}
+
 ASFLAGS         := -g
 LDFLAGS         := -nostdlib
 BOOT_CFLAGS     := -nostdlib -ffreestanding -fno-strict-aliasing -lgcc -T boot.ld -Wl,--no-warn-rwx-segments -g
@@ -17,19 +18,19 @@ WARNINGS        := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align
                    -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations \
                    -Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
                    -Wconversion -Wstrict-prototypes
-CFLAGS          := ${WARNINGS} -I${INCLUDE_DIR} -g -ffreestanding -fno-strict-aliasing -mno-red-zone
+CFLAGS          := ${WARNINGS} ${foreach dir,${INCLUDEDIRS},-I${dir}} -g -ffreestanding -fno-strict-aliasing -mno-red-zone
 
 STAGE1_OBJ_LIST := ${OBJ_OUTPUT_DIR}/stage1.o
 
 CRTI_OBJ        := ${OBJ_OUTPUT_DIR}/crti.o
-CRTBEGIN_OBJ    := $(shell ${CC32} ${CFLAGS} -print-file-name=crtbegin.o)
-CRTEND_OBJ      := $(shell ${CC32} ${CFLAGS} -print-file-name=crtend.o)
+CRTBEGIN_OBJ    := ${shell ${CC32} ${CFLAGS} -print-file-name=crtbegin.o}
+CRTEND_OBJ      := ${shell ${CC32} ${CFLAGS} -print-file-name=crtend.o}
 CRTN_OBJ        := ${OBJ_OUTPUT_DIR}/crtn.o
 
-PROJDIRS        := ${SRC_DIR}
-SRCFILES        := ${wildcard ${SRC_DIR}/*.c}
+PROJDIRS        := ${SRC_DIR} ${shell find drivers -type d -name src}
+SRCFILES        := ${strip ${foreach dir,${PROJDIRS},${wildcard ${dir}/*.c}}}
 HDRFILES        := ${wildcard ${INCLUDE_DIR}/*.h}
-OBJFILES        := ${patsubst %.c,${OBJ_OUTPUT_DIR}/%.o, ${notdir ${SRCFILES}}}
+OBJFILES        := ${patsubst %.c,${OBJ_OUTPUT_DIR}/%.o, ${SRCFILES}}
 
 STAGE2_OBJ_LIST := ${OBJ_OUTPUT_DIR}/stage2.o ${CRTI_OBJ} ${CRTBEGIN_OBJ} ${OBJFILES} ${CRTEND_OBJ} ${CRTN_OBJ}
 
@@ -49,11 +50,13 @@ assemble: ${OBJ_OUTPUT_DIR}
 	${AS32} ${SRC_DIR}/crti.s -o ${CRTI_OBJ} ${ASFLAGS}
 	${AS32} ${SRC_DIR}/crtn.s -o ${CRTN_OBJ} ${ASFLAGS}
 
-${OBJ_OUTPUT_DIR}/%.o: ${SRC_DIR}/%.c | ${OBJ_OUTPUT_DIR}
-	${CC32} ${CFLAGS} -c $< -o $@
+define OBJ_RULE
+${OBJ_OUTPUT_DIR}/${patsubst %.c,%.o,${1}}: ${1}
+	mkdir -p $${dir $$@}
+	${CC32} ${CFLAGS} -c $$< -o $$@
+endef
 
-${OBJ_OUTPUT_DIR}/isr.o: ${SRC_DIR}/isr.c | ${OBJ_OUTPUT_DIR}
-	${CC32} ${CFLAGS} -mgeneral-regs-only -c $< -o $@
+${foreach srcpath,${SRCFILES},${eval ${call OBJ_RULE,${srcpath}}}}
 
 link: assemble boot.ld ${SRCFILES} ${OBJFILES}
 	${CC32} ${STAGE1_OBJ_LIST} ${STAGE2_OBJ_LIST} -o ${OUTPUT_DIR}/boot.elf ${BOOT_CFLAGS}

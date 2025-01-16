@@ -10,7 +10,7 @@ void exception_handler()
     for (;;);
 }
 
-void kb_handler(struct interrupt_frame *frame)
+void kb_isr(struct interrupt_frame *frame)
 {
     (void) frame;
     uint8_t scancode; 

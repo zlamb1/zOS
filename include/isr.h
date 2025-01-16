@@ -4,6 +4,6 @@
 struct interrupt_frame; 
 
 void exception_handler(void) __attribute__((noreturn));
-void kb_handler(struct interrupt_frame *frame) __attribute((interrupt));
+void kb_isr(struct interrupt_frame *frame) __attribute((target("general-regs-only"), interrupt));
 
 #endif

@@ -22,7 +22,7 @@ void idt_init()
         vectors[vector] = true;
     }
 
-    idt_set_descriptor(33, &kb_handler, 0x8E);
+    idt_set_descriptor(33, &kb_isr, 0x8E);
     vectors[33] = true;
 
     __asm__ volatile("lidt %0" : : "m"(idtr)); // load the new IDT

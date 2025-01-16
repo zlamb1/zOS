@@ -62,7 +62,6 @@ void loader_main()
     {
         tui_write_char(get_ascii_from_key_info(info));
     }
-        
 
     goto w;
 }
