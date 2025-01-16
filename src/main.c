@@ -57,10 +57,10 @@ void loader_main()
     while (!has_key_info());
     
     KeyInfo info = dequeue_key_info();
-    char c = get_ascii_from_key_info(info);
+    char c = get_unicode_from_key_info(info);
     if (info.pressed && c != '\0')
     {
-        tui_write_char(get_ascii_from_key_info(info));
+        tui_write_char(get_unicode_from_key_info(info));
     }
 
     goto w;

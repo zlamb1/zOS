@@ -23,6 +23,6 @@ extern bool keycode_buffer[128];
 
 bool has_key_info(void); 
 KeyInfo dequeue_key_info(void); 
-char get_ascii_from_key_info(KeyInfo info);
+char get_unicode_from_key_info(KeyInfo info);
 
 #endif
