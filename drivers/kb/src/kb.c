@@ -3,7 +3,8 @@
 
 uint32_t kb_buf_size = 0, kb_buf_first = 0, kb_buf_last = 0;
 uint8_t scancode_buffer[KB_BUF_SIZE];  
-bool keycode_buffer[128]; 
+bool keycode_buffer[128];
+bool capslock_active = false;
 
 static unsigned char scancode_to_keycode[256] =
 {
@@ -14,7 +15,7 @@ static unsigned char scancode_to_keycode[256] =
     KB_KEY_D, KB_KEY_F, KB_KEY_G, KB_KEY_H, KB_KEY_J, KB_KEY_K, KB_KEY_L, KB_KEY_SEMICOLON,
     KB_KEY_SINGLEQUOTE, KB_KEY_BACKTICK, KB_KEY_LSHIFT, KB_KEY_BACKSLASH, KB_KEY_Z, KB_KEY_X, KB_KEY_C, KB_KEY_V,
     KB_KEY_B, KB_KEY_N, KB_KEY_M, KB_KEY_COMMA, KB_KEY_PERIOD, KB_KEY_SLASH, KB_KEY_RSHIFT, KB_KEY_ASTERISK,
-    0x0, KB_KEY_SPACE, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
+    0x0, KB_KEY_SPACE, KB_KEY_CAPSLOCK, 0x0, 0x0, 0x0, 0x0, 0x0
 };
 
 bool has_key_info()
@@ -30,10 +31,14 @@ KeyInfo dequeue_key_info()
     info.keycode = scancode_to_keycode[scancode & 0x7F];
     info.pressed = !(scancode & 0x80); 
     info.shift   = keycode_buffer[KB_KEY_LSHIFT] | keycode_buffer[KB_KEY_RSHIFT];
-    info.alt     = keycode_buffer[KB_KEY_LALT]   | keycode_buffer[KB_KEY_RALT];
     info.ctrl    = keycode_buffer[KB_KEY_LCTRL]  | keycode_buffer[KB_KEY_RCTRL];
-
+    info.caps    = capslock_active;
+    info.alt     = keycode_buffer[KB_KEY_LALT]   | keycode_buffer[KB_KEY_RALT];
+    
     keycode_buffer[info.keycode] = info.pressed;
+
+    if (info.keycode == KB_KEY_CAPSLOCK && info.pressed)
+        capslock_active = !capslock_active;
 
     __asm__ volatile("cli" ::: "memory");
     kb_buf_first = (kb_buf_first + 1) % KB_BUF_SIZE; 
@@ -46,6 +51,15 @@ KeyInfo dequeue_key_info()
 char get_ascii_from_key_info(KeyInfo info)
 {
     uint8_t keycode = info.keycode; 
+    char unmodified_unicode = KEYCODE_TO_UNICODE[keycode];
+
+    if (unmodified_unicode >= 'a' && unmodified_unicode <= 'z')
+    {
+        // unsigned overflow allows us to wrap to the correct index
+        uint8_t index = keycode + (info.shift ? 0x80 : 0x00) + (info.caps ? 0x80 : 0x00);
+        char c = KEYCODE_TO_UNICODE[index];
+        return KEYCODE_TO_UNICODE[index];
+    }
 
     return KEYCODE_TO_UNICODE[keycode | (info.shift ? 0x80 : 0x00)];
 }

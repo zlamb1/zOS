@@ -1,6 +1,11 @@
 #include "idt.h"
 #include "isr.h"
 
+// create an array of IDT entries; aligned for performance
+static IDTEntry idt[256] __attribute__((aligned(0x10))); 
+static IDTR idtr;
+static bool vectors[IDT_MAX_DESCRIPTORS];
+
 void idt_set_descriptor(uint8_t vector, void *isr, uint8_t flags) 
 {
     IDTEntry *descriptor = &idt[vector];

@@ -16,16 +16,10 @@ typedef struct {
 	uint16_t    isr_high;     // higher 16 bits of the ISR's address
 } __attribute__((packed)) IDTEntry;
 
-// create an array of IDT entries; aligned for performance
-static IDTEntry idt[256] __attribute__((aligned(0x10))); 
-
 typedef struct {
 	uint16_t	limit;
 	uint32_t	base;
 } __attribute__((packed)) IDTR;
-
-static IDTR idtr;
-static bool vectors[IDT_MAX_DESCRIPTORS];
 
 void idt_set_descriptor(uint8_t vector, void *isr, uint8_t flags);
 void idt_init(void);
