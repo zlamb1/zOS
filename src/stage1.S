@@ -21,7 +21,7 @@ _start:
     mov %ax, %ss
 
     # set up stack
-    mov $_STAGE1_STACK_MEM_LOC, %bp
+    mov CONSTANT(_STAGE1_STACK_MEM_LOC), %bp
     mov %bp, %sp
 
     # store drive num
@@ -31,62 +31,64 @@ _start:
     sti
 
     # set up code segment
-    ljmp $0, $_boot
+    ljmp CONSTANT(0), CONSTANT(LOCAL(_boot))
 
-_boot:
+LOCAL(_boot):
     lea greeting, %si
-    call print_str
+    call LOCAL(print_str)
 
     # print drive num
     lea drive_num_str, %si
-    call print_str
+    call LOCAL(print_str)
     mov (drive_number), %al
-    call print_num
-    mov $'\r', %al
-    call print_char
-    mov $'\n', %al
-    call print_char
+    call LOCAL(print_num)
+    mov CONSTANT('\r'), %al
+    call LOCAL(print_char)
+    mov CONSTANT('\n'), %al
+    call LOCAL(print_char)
 
     # load argument registers
-    mov $0x0, %ax
+    mov CONSTANT(0), %ax
     mov %ax, %es
-    mov $_STAGE2_MEM_LOC, %bx # %es:%bx -> 0:_STAGE2_MEM_LOC
-    mov $_STAGE2_NUM_SECTORS, %dh
+    mov CONSTANT(_STAGE2_MEM_LOC), %bx # %es:%bx -> 0:_STAGE2_MEM_LOC
+    mov CONSTANT(_STAGE2_NUM_SECTORS), %dh
 
     # load stage 2 into memory
-    call chs_load
-    
+    call LOCAL(chs_load)
+
     # jump to stage 2
-    ljmp $0x0, $_STAGE2_MEM_LOC
+    ljmp CONSTANT(0), CONSTANT(_STAGE2_MEM_LOC)
 
 /*
     %dh - num of sectors (512B) to read
     %es:%bx - where data will be stored
     %dl - the drive to read from
 */
-chs_load:
+LOCAL(chs_load):
     pusha
     push %dx
 
-    mov $0x02, %ah           # read instruction
+    mov CONSTANT(2), %ah           # read instruction
     mov %dh, %al             # number of sectors to read
-    mov $0x02, %cl           # sector to read
-    mov $0x0, %ch            # cylinder num
-    mov $0x0, %dh            # head num
+    mov CONSTANT(2), %cl           # sector to read
+    mov CONSTANT(0), %ch            # cylinder num
+    mov CONSTANT(0), %dh            # head num
     mov (drive_number), %dl  # drive num
 
     clc
-    int $0x13
-    jc read_fail
+    int CONSTANT(0x13)
+    jc LOCAL(read_fail)
 
     pop %dx
-    cmp %dh, %al       # num sectors read is restored to dh
-    jne read_fail_len  # we didn't read the num sectors requested; something failed
+    # num sectors read is restored to dh
+    cmp %dh, %al       
+    # we didn't read the num sectors requested; something failed
+    jne LOCAL(read_fail_len)
 
     popa
     ret
 
-read_fail:
+LOCAL(read_fail):
     # restore stack
     pop %dx
     popa
@@ -96,89 +98,90 @@ read_fail:
     
     # reset drive
     mov (drive_number), %dl
-    mov $0, %ah
-    int $0x13
+    mov CONSTANT(0), %ah
+    int CONSTANT(0x13)
     
-    jc read_fail_reset
+    jc LOCAL(read_fail_reset)
 
     # increment read_attempts
     mov (read_attempts), %al
     inc %al
     mov %al, (read_attempts)
 
-    cmp $3, %al
+    cmp CONSTANT(3), %al
 
     # restore %ax
     pop %ax
 
     # keep trying at least three times
-    jb chs_load
+    jb LOCAL(chs_load)
 
     # print error and halt
     lea read_fail_error, %si
-    call print_str
+    call LOCAL(print_str)
 
     # check status of last operation
     mov (drive_number), %dl
-    mov $0x1, %ah
-    int $0x13
+    mov CONSTANT(0x1), %ah
+    int CONSTANT(0x13)
 
     # print status
     mov %ah, %al
-    call print_num
+    call LOCAL(print_num)
 
-    call wait_for_key_press
-    jmp reboot
+    call LOCAL(read_input)
+    jmp LOCAL(reboot)
 
-read_fail_len:
+LOCAL(read_fail_len):
     lea read_len_error, %si
-    call print_str
-    call wait_for_key_press
-    jmp reboot
+    call LOCAL(print_str)
+    call LOCAL(read_input)
+    jmp LOCAL(reboot)
 
-read_fail_reset:
+LOCAL(read_fail_reset):
     lea read_reset_error, %si
-    call print_str
-    call wait_for_key_press
-    jmp reboot
+    call LOCAL(print_str)
+    call LOCAL(read_input)
+    jmp LOCAL(reboot)
 
 /*
     %al - char to print
 */
-print_char:
-    mov $0x0E, %ah
-    int $0x10
+LOCAL(print_char):
+    mov CONSTANT(0x0E), %ah
+    int CONSTANT(0x10)
     ret
 
 1:
-    mov $0x0E, %ah
-    int $0x10
+    mov CONSTANT(0x0E), %ah
+    int CONSTANT(0x10)
 /*
     %si - address to string
 */
-print_str:
+LOCAL(print_str):
+    cld
     lodsb
-    cmp $0, %al
+    cmp CONSTANT(0), %al
     jne 1b
     ret
 
-_print_num:
+LOCAL(_print_num):
     pusha
     test %al, %al
     jz 1f
 
-    mov $10, %bl
-    mov $0, %ah
+    mov CONSTANT(10), %bl
+    mov CONSTANT(0), %ah
     div %bl
-    call _print_num
+    call LOCAL(_print_num)
 
     # store character remainder into %al
-    mov $'0', %al
+    mov CONSTANT('0'), %al
     add %ah, %al
 
     # print character
-    mov $0x0E, %ah
-    int $0x10
+    mov CONSTANT(0x0E), %ah
+    int CONSTANT(0x10)
 
     1:
     popa
@@ -187,18 +190,18 @@ _print_num:
 /*
     %al - number to print
 */
-print_num:
+LOCAL(print_num):
     test %al, %al
     jnz 2f
 
     pusha
-    mov $'0', %al
-    call print_char
+    mov CONSTANT('0'), %al
+    call LOCAL(print_char)
     popa
     jmp 1f
 
     2:
-    call _print_num
+    call LOCAL(_print_num)
 
     1:
     ret
@@ -206,18 +209,15 @@ print_num:
 /*
     returns %al - key pressed
 */
-wait_for_key_press:
-    mov $0, %ah
-    int $0x16
+LOCAL(read_input):
+    mov CONSTANT(0), %ah
+    int CONSTANT(0x16)
     ret
 
-reboot:
+LOCAL(reboot):
     cli
     # long jump to reset vector
-    ljmp $BOOT_RESET_VECTOR, $0x0
-
-_loop:
-    jmp _loop
+    ljmp CONSTANT(BOOT_RESET_VECTOR), CONSTANT(0)
 
 .section .stage1.data, "aw"
 

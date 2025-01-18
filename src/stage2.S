@@ -3,6 +3,8 @@
 .extern _STAGE2_STACK_MEM_LOC
 .extern _STAGE2_MEM_DETAIL_LOC
 
+#include <boot.h>
+
 .section .stage2, "ax"
 
 .global _entry
@@ -11,22 +13,22 @@ _entry:
     xor %ax, %ax
     mov %ax, %ds
 
-    lea greeting, %bx
-    call print_str
+    lea greeting, %si
+    call LOCAL(print_str)
 
-    call enable_a20
+    call LOCAL(enable_a20)
 
     test %ax, %ax
-    jnz a20_enabled
+    jnz LOCAL(a20_enabled)
 
-    lea a20_error, %bx
-    call print_str
-    jmp abort
+    lea a20_error, %si
+    call LOCAL(print_str)
+    jmp LOCAL(abort)
 
-    a20_enabled:
+    LOCAL(a20_enabled):
 
     # store a map of memory
-    call find_mem
+    call LOCAL(find_mem)
     mov (_STAGE2_MEM_DETAIL_LOC), %ax
 
     # disable interrupts
@@ -37,48 +39,38 @@ _entry:
 
     # enter protected mode
     mov %cr0, %eax
-    or $1, %eax
+    or CONSTANT(1), %eax
     mov %eax, %cr0
 
     # clear pipeline
-    mov $pmode, %ax
-    ljmp $0x8, $pmode
+    mov CONSTANT(LOCAL(pmode)), %ax
+    ljmp CONSTANT(8), CONSTANT(LOCAL(pmode))
 
+1:
+    mov CONSTANT(0x0E), %ah
+    int CONSTANT(0x10)
 /*
-    %bx - stores address to string
+    %si - stores address to string
 */
-print_str:
-    pusha
-
+LOCAL(print_str):
     # clear direction flag
     cld
-    mov %bx, %si
-    
-    write:
     lodsb
-
-    cmp $0, %al
-    je end
-
-    mov $0x0E, %ah
-    int $0x10
-    jmp write
-
-    end:
-    popa
+    cmp CONSTANT(0), %al
+    jne 1b
     ret
 
-find_mem:
+LOCAL(find_mem):
     pusha
 
     # clear carry flag
     clc
 
     # setup destination (%es:%di)
-    mov $_STAGE2_MEM_DETAIL_LOC, %di
+    mov CONSTANT(_STAGE2_MEM_DETAIL_LOC), %di
 
     # add 8 bytes to preserve alignment of first entry
-    add $8, %di
+    add CONSTANT(8), %di
 
     # zero %ebx and %es
     xor %ebx, %ebx
@@ -88,67 +80,67 @@ find_mem:
     mov %ebx, %es:_STAGE2_MEM_DETAIL_LOC
 
     # store constants
-    mov $0x0534D4150, %edx
-    mov $0xE820, %eax
+    mov CONSTANT(0x0534D4150), %edx
+    mov CONSTANT(0xE820), %eax
     # force a valid ACPI 3.X entry
-    mov $1, %ecx
+    mov CONSTANT(1), %ecx
     mov %ecx, %es:20(%di)
     # request 24 bytes
-    mov $24, %ecx
-    int $0x15
+    mov CONSTANT(24), %ecx
+    int CONSTANT(0x15)
     jc 1f
-    mov $0x0534D4150, %edx
+    mov CONSTANT(0x0534D4150), %edx
     cmp %edx, %eax
     jne 1f
     test %ebx, %ebx
     jz 1f
-    jmp check_entry
+    jmp LOCAL(check_entry)
 
     # similar to above code
-    read_entry:
-    mov $0xE820, %eax
-    mov $1, %ecx
+    LOCAL(read_entry):
+    mov CONSTANT(0xE820), %eax
+    mov CONSTANT(1), %ecx
     mov %ecx, %es:20(%di)
-    mov $24, %ecx
-    int $0x15
+    mov CONSTANT(24), %ecx
+    int CONSTANT(0x15)
     jc 1f
-    mov $0x0534D4150, %edx
+    mov CONSTANT(0x0534D4150), %edx
 
-    check_entry:
+    LOCAL(check_entry):
     # zero bytes were read; skip entry
-    jcxz skip_entry
-    cmp $20, %cl
-    jbe notext
+    jcxz LOCAL(skip_entry)
+    cmp CONSTANT(20), %cl
+    jbe LOCAL(notext)
     mov %es:20(%di), %eax
-    test $1, %eax
-    je skip_entry
+    test CONSTANT(1), %eax
+    je LOCAL(skip_entry)
 
-    notext:
+    LOCAL(notext):
     mov %es:8(%di), %ecx
     or %es:12(%di), %ecx
-    jz skip_entry
+    jz LOCAL(skip_entry)
 
     # inc num_entries
     mov %es:_STAGE2_MEM_DETAIL_LOC, %eax
     inc %eax
     mov %eax, %es:_STAGE2_MEM_DETAIL_LOC
     # increment %di by 24 bytes
-    add $24, %di
+    add CONSTANT(24), %di
 
-    skip_entry:
+    LOCAL(skip_entry):
     test %ebx, %ebx
-    jnz read_entry
+    jnz LOCAL(read_entry)
 
     1:
     clc
     popa
     ret
 
-abort:
+LOCAL(abort):
     hlt
-    jmp abort
+    jmp LOCAL(abort)
 
-.include "src/a20.S"
+#include "a20.S"
 
 .section .stage2.data, "aw"
 
@@ -195,19 +187,15 @@ a20_error: .asciz "The A20 line could not be enabled!\r\n"
 .section .stage2, "ax"
 .code32
 
-pmode:
+LOCAL(pmode):
     # set data and stack selector
-    mov $0x10, %ax
+    mov CONSTANT(0x10), %ax
     mov %ax, %ds
     mov %ax, %ss
 
     # move stack to high memory
-    mov $_STAGE2_STACK_MEM_LOC, %ebp
+    mov CONSTANT(_STAGE2_STACK_MEM_LOC), %ebp
     mov %ebp, %esp
-
-    # write char to screen
-    movb $'P', (0xB8000)
-    movb $0x1B, (0xB8001)
 
     # System V ABI expects direction flag cleared
     cld
