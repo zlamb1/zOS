@@ -115,7 +115,7 @@ find_mem:
     mov $0x0534D4150, %edx
 
     check_entry:
-    # if zero bytes were read skip entry
+    # zero bytes were read; skip entry
     jcxz skip_entry
     cmp $20, %cl
     jbe notext
@@ -148,7 +148,7 @@ abort:
     hlt
     jmp abort
 
-.include "src/a20.s"
+.include "src/a20.S"
 
 .section .stage2.data, "aw"
 
@@ -216,6 +216,6 @@ pmode:
 
     call loader_main
 
-.include "src/isr.s"
+.include "src/isr.S"
 
 .extern loader_main

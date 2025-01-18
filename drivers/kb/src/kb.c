@@ -56,7 +56,7 @@ char get_unicode_from_key_info(KeyInfo info)
     if (unmodified_unicode >= 'a' && unmodified_unicode <= 'z')
     {
         // unsigned overflow allows us to wrap to the correct index
-        uint8_t index = keycode + (uint8_t)((info.shift ? 0x80 : 0x00) + (info.caps ? 0x80 : 0x00));
+        uint8_t index = keycode + (uint8_t) ((info.shift ? 0x80 : 0x00) + (info.caps ? 0x80 : 0x00));
         return KEYCODE_TO_UNICODE[index];
     }
 

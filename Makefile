@@ -10,15 +10,15 @@ LD32            := ${BINUTILS_DIR}/${TARGET32}-ld
 CC32            := ${BINUTILS_DIR}/${TARGET32}-gcc
 
 INCLUDEDIRS     := include ${shell find drivers -type d -name include}
+INCLUDEFLAGS    := ${foreach dir,${INCLUDEDIRS},-I${dir}}
 
-ASFLAGS         := -g
-LDFLAGS         := -nostdlib
-BOOT_CFLAGS     := -nostdlib -ffreestanding -fno-strict-aliasing -lgcc -T boot.ld -Wl,--no-warn-rwx-segments -g
+ASFLAGS         := -nostdlib -ffreestanding -g -c ${INCLUDEFLAGS}
+LDFLAGS         := -nostdlib -ffreestanding -fno-strict-aliasing -lgcc -Wl,--no-warn-rwx-segments -g
 WARNINGS        := -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wcast-align \
                    -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations \
                    -Wredundant-decls -Wnested-externs -Winline -Wno-long-long \
                    -Wconversion -Wstrict-prototypes
-CFLAGS          := ${WARNINGS} ${foreach dir,${INCLUDEDIRS},-I${dir}} -g -ffreestanding -fno-strict-aliasing -mno-red-zone
+CFLAGS          := ${WARNINGS} ${INCLUDEFLAGS} -g -ffreestanding -fno-strict-aliasing -mno-red-zone
 
 STAGE1_OBJ_LIST := ${OBJ_OUTPUT_DIR}/stage1.o
 
@@ -45,10 +45,10 @@ ${OBJ_OUTPUT_DIR}:
 	mkdir -p ${OBJ_OUTPUT_DIR}
 
 assemble: ${OBJ_OUTPUT_DIR}
-	${AS32} ${SRC_DIR}/stage1.s -o ${OBJ_OUTPUT_DIR}/stage1.o ${ASFLAGS}
-	${AS32} ${SRC_DIR}/stage2.s -o ${OBJ_OUTPUT_DIR}/stage2.o ${ASFLAGS}
-	${AS32} ${SRC_DIR}/crti.s -o ${CRTI_OBJ} ${ASFLAGS}
-	${AS32} ${SRC_DIR}/crtn.s -o ${CRTN_OBJ} ${ASFLAGS}
+	${CC32} ${SRC_DIR}/stage1.S -o ${OBJ_OUTPUT_DIR}/stage1.o ${ASFLAGS}
+	${CC32} ${SRC_DIR}/stage2.S -o ${OBJ_OUTPUT_DIR}/stage2.o ${ASFLAGS}
+	${CC32} ${SRC_DIR}/crti.S -o ${CRTI_OBJ} ${ASFLAGS}
+	${CC32} ${SRC_DIR}/crtn.S -o ${CRTN_OBJ} ${ASFLAGS}
 
 define OBJ_RULE
 ${OBJ_OUTPUT_DIR}/${patsubst %.c,%.o,${1}}: ${1}
@@ -59,7 +59,7 @@ endef
 ${foreach srcpath,${SRCFILES},${eval ${call OBJ_RULE,${srcpath}}}}
 
 link: assemble boot.ld ${SRCFILES} ${OBJFILES}
-	${CC32} ${STAGE1_OBJ_LIST} ${STAGE2_OBJ_LIST} -o ${OUTPUT_DIR}/boot.elf ${BOOT_CFLAGS}
+	${CC32} ${STAGE1_OBJ_LIST} ${STAGE2_OBJ_LIST} -o ${OUTPUT_DIR}/boot.elf ${LDFLAGS} -T boot.ld 
 	objcopy -O binary ${OUTPUT_DIR}/boot.elf ${OUTPUT_DIR}/boot.bin
 
 disk: link

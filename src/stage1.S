@@ -9,6 +9,8 @@
 
 .global _start
 
+#include <boot.h>
+
 _start:
     # disable interrupts temporarily so that they don't use incorrect segments
     cli 
@@ -32,11 +34,11 @@ _start:
     ljmp $0, $_boot
 
 _boot:
-    lea greeting, %bx
+    lea greeting, %si
     call print_str
 
     # print drive num
-    lea drive_num_str, %bx
+    lea drive_num_str, %si
     call print_str
     mov (drive_number), %al
     call print_num
@@ -53,7 +55,7 @@ _boot:
 
     # load stage 2 into memory
     call chs_load
-
+    
     # jump to stage 2
     ljmp $0x0, $_STAGE2_MEM_LOC
 
@@ -113,7 +115,7 @@ read_fail:
     jb chs_load
 
     # print error and halt
-    lea read_fail_error, %bx
+    lea read_fail_error, %si
     call print_str
 
     # check status of last operation
@@ -121,34 +123,21 @@ read_fail:
     mov $0x1, %ah
     int $0x13
 
-    push %ax
-
-    mov $' ', %al
-    call print_char
-
-    mov $'(', %al
-    call print_char
-
-    pop %ax
-
     # print status
     mov %ah, %al
     call print_num
-
-    mov $')', %al
-    call print_char
 
     call wait_for_key_press
     jmp reboot
 
 read_fail_len:
-    lea read_len_error, %bx
+    lea read_len_error, %si
     call print_str
     call wait_for_key_press
     jmp reboot
 
 read_fail_reset:
-    lea read_reset_error, %bx
+    lea read_reset_error, %si
     call print_str
     call wait_for_key_press
     jmp reboot
@@ -157,55 +146,37 @@ read_fail_reset:
     %al - char to print
 */
 print_char:
-    pusha
     mov $0x0E, %ah
     int $0x10
-    popa
     ret
 
+1:
+    mov $0x0E, %ah
+    int $0x10
 /*
-    %bx - stores address to string
+    %si - address to string
 */
 print_str:
-    pusha
-
-    # clear direction flag
-    cld
-    mov %bx, %si
-    
-    write:
     lodsb
-
     cmp $0, %al
-    je end
-
-    mov $0x0E, %ah
-    int $0x10
-    jmp write
-
-    end:
-    popa
+    jne 1b
     ret
 
-/*
-    !WARNING: this function won't handle zero
-    %al - number to print
-*/
-print_num:
+_print_num:
     pusha
-
-    # FIXME: doesn't print zero correctly
     test %al, %al
     jz 1f
 
     mov $10, %bl
     mov $0, %ah
     div %bl
-    call print_num
+    call _print_num
 
     # store character remainder into %al
     mov $'0', %al
     add %ah, %al
+
+    # print character
     mov $0x0E, %ah
     int $0x10
 
@@ -214,18 +185,36 @@ print_num:
     ret
 
 /*
+    %al - number to print
+*/
+print_num:
+    test %al, %al
+    jnz 2f
+
+    pusha
+    mov $'0', %al
+    call print_char
+    popa
+    jmp 1f
+
+    2:
+    call _print_num
+
+    1:
+    ret
+
+/*
     returns %al - key pressed
 */
 wait_for_key_press:
-    pusha
     mov $0, %ah
     int $0x16
-    popa
     ret
 
 reboot:
+    cli
     # long jump to reset vector
-    ljmp $0xFFFF, $0x0
+    ljmp $BOOT_RESET_VECTOR, $0x0
 
 _loop:
     jmp _loop
@@ -239,6 +228,6 @@ read_attempts: .byte 0x0
 
 greeting: .asciz "Starting Stage 1...\r\n"
 drive_num_str: .asciz "Drive Number: "
-read_fail_error: .asciz "Disk Read Fail"
+read_fail_error: .asciz "Disk Read Fail: "
 read_len_error: .asciz "Disk Read Length Fail"
 read_reset_error: .asciz "Disk Reset Fail"
