@@ -1,8 +1,8 @@
 #include "io.h"
 
-unsigned char inb(uint16_t port)
+byte inb(u16 port)
 {
-    unsigned char out;
+    byte out;
 
     __asm__ volatile(
         "inb %w1, %b0" :
@@ -14,7 +14,7 @@ unsigned char inb(uint16_t port)
     return out;
 }
 
-void outb(uint16_t port, uint8_t val)
+void outb(u16 port, u8 val)
 {
     __asm__ __volatile__(
         "outb %b0, %w1"        : 

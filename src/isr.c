@@ -1,7 +1,7 @@
 #include "isr.h"
 #include "kb.h"
 
-#include <stdint.h>
+#include "types.h"
 
 void exception_handler() 
 {
@@ -13,7 +13,7 @@ void exception_handler()
 void kb_isr(struct interrupt_frame *frame)
 {
     (void) frame;
-    uint8_t scancode; 
+    u8 scancode; 
 
     __asm__ volatile(
         "inb $0x60, %0" :

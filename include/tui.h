@@ -2,21 +2,22 @@
 #define TUI_H 1
 
 #include <stdarg.h>
-#include <stdint.h>
 
-void tui_init(char color);
+#include "types.h"
+
+void tui_init(byte color);
 void tui_disable_cursor(void);
-void tui_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
-void tui_move_cursor(uint16_t x, uint16_t y);
+void tui_enable_cursor(u8 cursor_start, u8 cursor_end);
+void tui_move_cursor(u16 x, u16 y);
 void tui_write_char(char c); 
-uint32_t tui_write_str(const char *str);
-uint32_t tui_write_int32(int32_t n);
-uint32_t tui_write_uint32(uint32_t n);
-uint32_t tui_write_int64(int64_t n);
-uint32_t tui_write_uint64(uint64_t n);
-uint32_t tui_write_uint32_x(uint32_t n);
-uint32_t tui_write_uint64_x(uint64_t n);
+u32 tui_write_str(const char *str);
+u32 tui_write_int32(i32 n);
+u32 tui_write_uint32(u32 n);
+u32 tui_write_int64(i64 n);
+u32 tui_write_uint64(u64 n);
+u32 tui_write_uint32_x(u32 n);
+u32 tui_write_uint64_x(u64 n);
 void tui_printf(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-void tui_clear(char color);
+void tui_clear(byte color);
 
 #endif

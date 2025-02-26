@@ -4,25 +4,27 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "types.h"
+
 #define KB_BUF_SIZE 32
 
-typedef struct
+struct key_event
 {
-    uint8_t keycode;
-    uint8_t pressed : 1;
-    uint8_t shift   : 1; 
-    uint8_t ctrl    : 1;
-    uint8_t caps    : 1;
-    uint8_t alt     : 1;
-    uint8_t super   : 1;
-} KeyInfo; 
+    u8 keycode;
+    u8 pressed : 1;
+    u8 shift   : 1; 
+    u8 ctrl    : 1;
+    u8 caps    : 1;
+    u8 alt     : 1;
+    u8 super   : 1;
+}; 
 
-extern uint32_t kb_buf_size, kb_buf_first, kb_buf_last;
-extern uint8_t scancode_buffer[KB_BUF_SIZE];  
+extern u32 kb_buf_size, kb_buf_first, kb_buf_last;
+extern u8 scancode_buffer[KB_BUF_SIZE];  
 extern bool keycode_buffer[128]; 
 
-bool has_key_info(void); 
-KeyInfo dequeue_key_info(void); 
-char get_unicode_from_key_info(KeyInfo info);
+bool has_key_event(void); 
+struct key_event dequeue_key_event(void); 
+char get_unicode_from_key_info(struct key_event event);
 
 #endif

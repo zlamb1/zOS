@@ -2,24 +2,24 @@
 #include "isr.h"
 
 // create an array of IDT entries; aligned for performance
-static IDTEntry idt[256] __attribute__((aligned(0x10))); 
-static IDTR idtr;
+static struct idt_entry idt[256] __attribute__((aligned(0x10))); 
+static struct idtr idtr;
 static bool vectors[IDT_MAX_DESCRIPTORS];
 
-void idt_set_descriptor(uint8_t vector, void *isr, uint8_t flags) 
+void idt_set_descriptor(u8 vector, void *isr, u8 flags) 
 {
-    IDTEntry *descriptor = &idt[vector];
-    descriptor->isr_low     = (uint16_t) ((uint32_t) isr & 0xFFFF);
+    struct idt_entry *descriptor = &idt[vector];
+    descriptor->isr_low     = (u16) ((u32) isr & 0xFFFF);
     descriptor->kernel_cs   = 0x08; // code selector
     descriptor->attributes  = flags;
-    descriptor->isr_high    = (uint16_t) ((uint32_t) isr >> 16);
+    descriptor->isr_high    = (u16) ((u32) isr >> 16);
     descriptor->reserved    = 0;
 }
 
 void idt_init() 
 {
-    idtr.base = (uintptr_t) &idt[0];
-    idtr.limit = (uint16_t) sizeof(IDTEntry) * IDT_MAX_DESCRIPTORS - 1;
+    idtr.base = (uptr) &idt[0];
+    idtr.limit = (u16) sizeof(struct idt_entry) * IDT_MAX_DESCRIPTORS - 1;
 
     for (uint8_t vector = 0; vector < 32; vector++) 
     {

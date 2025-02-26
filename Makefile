@@ -1,4 +1,5 @@
 SRC_DIR         := src
+DRIVERS_DIR     := drivers
 OUTPUT_DIR      := build
 OBJ_OUTPUT_DIR  := ${OUTPUT_DIR}/obj
 TOOL_DIR        := ${HOME}/opt/cross
@@ -27,8 +28,8 @@ CRTBEGIN_OBJ    := ${shell ${CC32} ${CFLAGS} -print-file-name=crtbegin.o}
 CRTEND_OBJ      := ${shell ${CC32} ${CFLAGS} -print-file-name=crtend.o}
 CRTN_OBJ        := ${OBJ_OUTPUT_DIR}/crtn.o
 
-PROJDIRS        := ${SRC_DIR} ${shell find drivers -type d -name src}
-SRCFILES        := ${strip ${foreach dir,${PROJDIRS},${wildcard ${dir}/*.c}}}
+PROJDIRS        := ${SRC_DIR} ${DRIVERS_DIR}
+SRCFILES        := ${strip ${foreach dir,${PROJDIRS},${shell find ${dir} -name "*.c"}}}
 HDRFILES        := ${wildcard ${INCLUDE_DIR}/*.h}
 OBJFILES        := ${patsubst %.c,${OBJ_OUTPUT_DIR}/%.o, ${SRCFILES}}
 
@@ -56,7 +57,7 @@ ${OBJ_OUTPUT_DIR}/${patsubst %.c,%.o,${1}}: ${1}
 	${CC32} ${CFLAGS} -c $$< -o $$@
 endef
 
-${foreach srcpath,${SRCFILES},${eval ${call OBJ_RULE,${srcpath}}}}
+${foreach filepath,${SRCFILES},${eval ${call OBJ_RULE,${filepath}}}}
 
 link: assemble boot.ld ${SRCFILES} ${OBJFILES}
 	${CC32} ${STAGE1_OBJ_LIST} ${STAGE2_OBJ_LIST} -o ${OUTPUT_DIR}/boot.elf ${LDFLAGS} -T boot.ld 

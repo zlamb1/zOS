@@ -1,8 +1,8 @@
 #include "kb.h"
 #include "kb_def.h"
 
-uint32_t kb_buf_size = 0, kb_buf_first = 0, kb_buf_last = 0;
-uint8_t scancode_buffer[KB_BUF_SIZE];  
+u32 kb_buf_size = 0, kb_buf_first = 0, kb_buf_last = 0;
+u8 scancode_buffer[KB_BUF_SIZE];  
 bool keycode_buffer[128];
 bool capslock_active = false;
 
@@ -18,26 +18,26 @@ static unsigned char scancode_to_keycode[256] =
     0x0, KB_KEY_SPACE, KB_KEY_CAPSLOCK, 0x0, 0x0, 0x0, 0x0, 0x0
 };
 
-bool has_key_info()
+bool has_key_event()
 {
     return kb_buf_size > 0;
 }
 
-KeyInfo dequeue_key_info()
+struct key_event dequeue_key_event()
 {
-    KeyInfo info = {0};
-    uint8_t scancode = scancode_buffer[kb_buf_first];
+    struct key_event event = {0};
+    u8 scancode = scancode_buffer[kb_buf_first];
 
-    info.keycode = scancode_to_keycode[scancode & 0x7F];
-    info.pressed = !(scancode & 0x80); 
-    info.shift   = keycode_buffer[KB_KEY_LSHIFT] | keycode_buffer[KB_KEY_RSHIFT];
-    info.ctrl    = keycode_buffer[KB_KEY_LCTRL]  | keycode_buffer[KB_KEY_RCTRL];
-    info.caps    = capslock_active;
-    info.alt     = keycode_buffer[KB_KEY_LALT]   | keycode_buffer[KB_KEY_RALT];
+    event.keycode = scancode_to_keycode[scancode & 0x7F];
+    event.pressed = !(scancode & 0x80); 
+    event.shift   = keycode_buffer[KB_KEY_LSHIFT] | keycode_buffer[KB_KEY_RSHIFT];
+    event.ctrl    = keycode_buffer[KB_KEY_LCTRL]  | keycode_buffer[KB_KEY_RCTRL];
+    event.caps    = capslock_active;
+    event.alt     = keycode_buffer[KB_KEY_LALT]   | keycode_buffer[KB_KEY_RALT];
     
-    keycode_buffer[info.keycode] = info.pressed;
+    keycode_buffer[event.keycode] = event.pressed;
 
-    if (info.keycode == KB_KEY_CAPSLOCK && info.pressed)
+    if (event.keycode == KB_KEY_CAPSLOCK && event.pressed)
         capslock_active = !capslock_active;
 
     __asm__ volatile("cli" ::: "memory");
@@ -45,20 +45,20 @@ KeyInfo dequeue_key_info()
     kb_buf_size--;
     __asm__ volatile("sti" ::: "memory");
 
-    return info;
+    return event;
 }
 
-char get_unicode_from_key_info(KeyInfo info)
+char get_unicode_from_key_info(struct key_event event)
 {
-    uint8_t keycode = info.keycode; 
+    u8 keycode = event.keycode; 
     char unmodified_unicode = KEYCODE_TO_UNICODE[keycode];
 
     if (unmodified_unicode >= 'a' && unmodified_unicode <= 'z')
     {
         // unsigned overflow allows us to wrap to the correct index
-        uint8_t index = keycode + (uint8_t) ((info.shift ? 0x80 : 0x00) + (info.caps ? 0x80 : 0x00));
+        u8 index = keycode + (u8) ((event.shift ? 0x80 : 0x00) + (event.caps ? 0x80 : 0x00));
         return KEYCODE_TO_UNICODE[index];
     }
 
-    return KEYCODE_TO_UNICODE[keycode | (info.shift ? 0x80 : 0x00)];
+    return KEYCODE_TO_UNICODE[keycode | (event.shift ? 0x80 : 0x00)];
 }
