@@ -1,23 +1,14 @@
-ARCHDIR := pc
-CFLAGS := -g -c -nostdlib -ffreestanding -fno-strict-aliasing -mno-red-zone
-LDFLAGS := -nostdlib -ffreestanding -fno-strict-aliasing -lgcc -Wl,--no-warn-rwx-segments,--build-id=none
-SRCDIR := src/boot
-SRCFILES := ${wildcard ${SRCDIR}/${ARCHDIR}/*.S}
-OBJFILES := ${patsubst ${SRCDIR}/${ARCHDIR}/%.S,${OUTDIR}/${SRCDIR}/%.o,${SRCFILES}}
-BOOTBIN := ${OUTDIR}/boot.bin
-BOOTELF := ${OUTDIR}/boot.elf
-BOOTLD := ${SRCDIR}/${ARCHDIR}/boot.ld
+MSRCDIR := ${GETPATH}
+MSRCFILES := ${wildcard ${MSRCDIR}*.S}
+MOBJFILES := ${patsubst %.S,${OUTDIR}/%.o,${MSRCFILES}}
+MOUTDIR := ${OUTDIR}/${MSRCDIR}
+BOOTLD := ${MSRCDIR}boot.ld
 
-boot_all: ${BOOTBIN}
+OBJFILES += ${MOBJFILES}
 
-${BOOTBIN}: ${BOOTELF}
-	objcopy -O binary ${BOOTELF} ${BOOTBIN}
+machine_all: ${MOBJFILES}
 
-${BOOTELF}: ${OBJFILES}
-	${CC} ${LDFLAGS} ${OBJFILES} -T ${BOOTLD} -o ${BOOTELF}
+${foreach OBJFILE,${MOBJFILES},${eval ${call MK_S_OBJ,${OBJFILE},${MOUTDIR}}}}
 
-${OUTDIR}/${SRCDIR}/%.o: ${SRCDIR}/${ARCHDIR}/%.S | ${OUTDIR}/${SRCDIR}
-	${CC} ${CFLAGS} $< -o $@
-
-${OUTDIR}/${SRCDIR}:
-	mkdir -p ${OUTDIR}/${SRCDIR}
+${MOUTDIR}:
+	mkdir -p ${MOUTDIR}

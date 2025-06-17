@@ -2,6 +2,7 @@
 
 .extern STAGE1_STK
 .extern STAGE2_LOC
+.extern STAGE2_SEC
 
 .section .stage1, "ax"
 
@@ -34,7 +35,7 @@ disk_addr_packet:
 .align 4
 .byte  0x0010
 .byte  0x0000
-.short 0x0001
+.short STAGE2_SEC
 .short STAGE2_LOC
 .short 0x0000
 .word  0x0001
