@@ -1,4 +1,4 @@
-./build.sh
+make
 
 if [[ "$1" == "debug" ]]; then
     qemu-system-i386 \

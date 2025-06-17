@@ -38,5 +38,5 @@ disk_addr_packet:
 .short STAGE2_SEC
 .short STAGE2_LOC
 .short 0x0000
-.word  0x0001
-.word  0x0000
+.long  0x0001
+.long  0x0000

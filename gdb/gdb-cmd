@@ -7,5 +7,5 @@ target remote localhost:1234
 
 layout reg
 
-break *0x7C00
-cont
+b *0x7C00
+c

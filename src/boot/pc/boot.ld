@@ -27,6 +27,7 @@ SECTIONS
         . = ALIGN(512);
         *(.text)
         *(.data)
+        *(.rodata)
         *(.bss)
         . = ALIGN(512);
         end = .;

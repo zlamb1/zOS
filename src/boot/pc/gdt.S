@@ -1,12 +1,11 @@
 .section .stage2.data, "aw"
 
-.global gdt
-.global gdt_desc
+.global gdtdesc
 
 gdt:
     # null descriptor
     .quad 0x0
-    gdt_code:
+    protcode:
         # limit
         .short 0xFFFF
         # bits 1 - 16 of base address
@@ -19,7 +18,7 @@ gdt:
         .byte 0b11001111
         # bits 24 - 32 of base address
         .byte 0x0
-    gdt_data:
+    protdata:
         # limit
         .short 0xFFFF
         # bits 1 - 16 of base address
@@ -32,8 +31,14 @@ gdt:
         .byte 0b11001111
         # bits 24 - 32 of base address
         .byte 0x0
-gdt_end:
+    realcode:
+        .short 0xFFFF, 0x00
+        .byte  0x0000, 0x9E, 0x0, 0x0
+    realdata:
+        .short 0xFFFF, 0x00
+        .byte  0x0000, 0x92, 0x0, 0x0
+gdtend:
 
-gdt_desc:
-    .short gdt_end - gdt - 1
+gdtdesc:
+    .short gdtend - gdt - 1
     .long  gdt
