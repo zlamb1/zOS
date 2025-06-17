@@ -4,7 +4,7 @@
 .extern STAGE2_LOC
 .extern STAGE2_SEC
 
-.section .stage1, "ax"
+.section .stage1.text, "ax"
 
 .global start
 

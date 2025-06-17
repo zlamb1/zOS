@@ -9,16 +9,16 @@ SECTIONS
 
     . = STAGE1_LOC;
 
-    .stage1.text :
+    .stage1 :
     {
-        *(.stage1)
+        *(.stage1.text)
         *(.stage1.data)
         FILL(0x0)
         . = 510;
         SHORT(0xAA55)
     }
 
-    .stage2.text :
+    .stage2 :
     {
         *(.stage2.text)
         *(.stage2.utility)
