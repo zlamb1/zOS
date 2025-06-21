@@ -1,4 +1,4 @@
-.section .stage2.data, "aw"
+.section .stage2.data
 
 .global gdtdesc
 

@@ -24,19 +24,43 @@ boot:
     mov $0x80, %dl
     int $0x13
     mov $0x42, %ah
-    mov $disk_addr_packet, %si
+    mov $DISK_ADDRESS_PACKET, %si
     mov $0x80, %dl
     int $0x13
     ljmp $0, $STAGE2_LOC
 
-.section .stage1.data, "aw"
-
-disk_addr_packet:
 .align 4
-.byte  0x0010
-.byte  0x0000
-.short STAGE2_SEC
-.short STAGE2_LOC
-.short 0x0000
-.long  0x0001
-.long  0x0000
+DISK_ADDRESS_PACKET:
+    .byte  0x0010
+    .byte  0x0000
+    .short STAGE2_SEC
+    .short STAGE2_LOC
+    .short 0x0000
+    .long  0x0001
+    .long  0x0000
+
+. = 446
+
+.macro part n
+partition\n:
+    p\n\()_drive: 
+        .byte 0
+    p\n\()_first_sector: 
+        .byte 0, 0, 0
+    p\n\()_type: 
+        .byte 0
+    p\n\()_last_sector: 
+        .byte 0, 0, 0
+    p\n\()_first_sector_lba: 
+        .byte 0, 0, 0, 0
+    p\n\()_num_sectors: 
+        .byte 0, 0, 0, 0
+.endm
+
+part 1
+part 2
+part 3
+part 4
+
+. = 510
+.byte 0x55, 0xAA

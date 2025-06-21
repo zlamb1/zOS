@@ -15,7 +15,7 @@ protstack:
 
 .global enter_prot
 .global enter_real
-.global bios_interrupt
+.global root_bios_interrupt
 
 .code16
 enter_prot:
@@ -73,7 +73,7 @@ rmode:
 # ;eax - int num
 # ;edx - regs
 .code32
-bios_interrupt:
+root_bios_interrupt:
     pushf
     push %ebp
     push %eax

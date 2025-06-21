@@ -17,6 +17,6 @@ start2:
 
     calll enter_prot
 .code32
-    jmp kmain
+    jmp root_main
 
-.extern kmain
+.extern root_main
